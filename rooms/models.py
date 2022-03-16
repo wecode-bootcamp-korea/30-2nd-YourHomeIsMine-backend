@@ -2,11 +2,11 @@ from django.db import models
 
 from core.models import TimeStampModel
 
-class RoomType(models.Model):
+class Category(models.Model):
     type = models.CharField(max_length=50)
     
     class Meta:
-        db_table = 'room_types'      
+        db_table = 'categories'      
 
 class Room(TimeStampModel):
     name               = models.CharField(max_length=100)
@@ -25,7 +25,7 @@ class Room(TimeStampModel):
     latitute           = models.DecimalField(max_digits=15, decimal_places=10)
     longitute          = models.DecimalField(max_digits=15, decimal_places=10)
     user               = models.ForeignKey('users.User', related_name='rooms', on_delete=models.CASCADE)    
-    room_type          = models.ForeignKey('RoomType', related_name='rooms', on_delete=models.CASCADE) 
+    category           = models.ForeignKey('Category', related_name='rooms', on_delete=models.CASCADE) 
     
     class Meta:
         db_table = 'rooms'   
@@ -46,6 +46,7 @@ class AmenityType(models.Model):
 class Amenity(models.Model):
     name         = models.CharField(max_length=100)
     amenity_type = models.ForeignKey('AmenityType', related_name='amenities', on_delete=models.CASCADE)
+    icon_url     = models.CharField(max_length=2000, null=True)
     
     class Meta:
         db_table = 'amenities'      
@@ -57,14 +58,16 @@ class RoomAmenity(models.Model):
     class Meta:
         db_table = 'room_amenities'      
 
-class HouseRules(models.Model):
-    name = models.CharField(max_length=100)
-
+class HouseRule(models.Model):
+    name     = models.CharField(max_length=100)
+    icon_url = models.CharField(max_length=2000, null=True)
+    
     class Meta:
         db_table = 'house_rules'  
 
 class RoomHouseRule(models.Model):
-    room = models.ForeignKey('Room', related_name='room_houserules', on_delete=models.CASCADE)
+    room       = models.ForeignKey('Room', related_name='room_houserules', on_delete=models.CASCADE)
+    house_rule = models.ForeignKey('HouseRule', related_name='room_houserules', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'room_house_rules'
