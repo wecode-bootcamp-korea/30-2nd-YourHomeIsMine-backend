@@ -1,3 +1,45 @@
-from django.shortcuts import render
+from django.http  import JsonResponse
+from django.views import View
 
-# Create your views here.
+from rooms.models import Room, RoomAmenity, RoomHouseRule
+
+class RoomDetailView(View):
+    def get(self, request, room_id):
+
+        if not Room.objects.filter(id=room_id).exists():
+            return JsonResponse({'message': 'ROOM_DOES_NOT_EXIST'}, status=404)
+
+        room = Room.objects.select_related('category')\
+                           .prefetch_related('room_amenities', 'room_houserules', 'room_images', 'room_schedules').get(id=room_id)
+
+        result = {
+            "name"            : room.name,
+            "description"     : room.description,
+            "district"        : room.district,
+            "neighberhood"    : room.neighberhood,
+            "price"           : float(room.price),
+            "address"         : room.address,
+            "guests"          : int(room.guests),
+            "beds"            : room.beds,
+            "bedrooms"        : room.bedrooms,
+            "baths"           : room.baths,
+            "latitute"        : float(room.latitute),
+            "longitute"       : float(room.longitute),
+            "host"            : room.user.nickname,
+            "host_image"      : room.user.profile_image,
+            "category"        : room.category.type,
+            "room_images_url" : [image.image_url for image in room.room_images.all()],
+            "check_in"        : [schedule.check_in for schedule in room.room_schedules.all()],
+            "room_amenities"  : [{
+                    "amenity_id"       : amenity.id,
+                    "amenity_name"     : amenity.amenity.name,
+                    "amenity_icon_url" : amenity.amenity.icon_url,
+                }for amenity in RoomAmenity.objects.filter(room_id=room_id)],
+            "check_in_time"  : room.check_in_time,
+            "check_out_time" : room.check_out_time,
+            "house_rules" : [{
+                    "room_rules"     : rules.house_rule.name,
+                    "rules_icon_url" : rules.house_rule.icon_url,
+                }for rules in RoomHouseRule.objects.filter(room_id=room_id)]    
+        }
+        return JsonResponse({'message' : result}, status=200)
