@@ -89,7 +89,7 @@ class KakaoSignInTest(TestCase):
         
         mocked_requests.get = mock.MagicMock(return_value = MockedResponse())
         headers             = {'HTTP_Authorization' : 'fake_access_token'}
-        response            = client.get('/users/login/kakao/callback', **headers)  
+        response            = client.get('/users/login/kakao', **headers)  
 
         self.assertEqual(response.status_code, 405)
         self.assertEqual(response.json(), {'message': 'EMAIL_REQUIRED'})   
@@ -117,7 +117,7 @@ class KakaoSignInTest(TestCase):
             }
         
         mocked_requests.get = mock.MagicMock(return_value = MockedResponse())
-        response            = client.get('/users/login/kakao/callback')
+        response            = client.get('/users/login/kakao')
 
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json(), {'message' : 'INVALID ACCESS TOKEN'})
