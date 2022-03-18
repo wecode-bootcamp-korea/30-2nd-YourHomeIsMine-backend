@@ -1,3 +1,14 @@
-from django.test import TestCase
+# from django.test import TestCase, Client
 
-# Create your tests here.
+# from 
+
+# class ReviewTest(TestCase):
+#     def setUp(self):
+#         return super().setUp()
+    
+#     def test_get(self):
+#         self.assertEqual(,)
+
+
+# if __name__ == '__main__':
+#     unittest.main()
