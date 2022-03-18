@@ -1,7 +1,68 @@
-from django.http  import JsonResponse
-from django.views import View
+from datetime          import datetime
+from django.http       import JsonResponse
+from django.views      import View
+from django.db.models  import Q
 
-from rooms.models import Room, RoomAmenity, RoomHouseRule
+from rooms.models      import Room, RoomAmenity, RoomHouseRule, RoomSchedule
+        
+class RoomListView(View):
+    def get(self, request):
+        category        = request.GET.get('category', "0")
+        check_in        = request.GET.get('check_in', "2022-01-01")
+        check_out       = request.GET.get('check_out', "2022-12-31")
+        guest           = request.GET.get('guest', 1)
+        price_min       = request.GET.get('price_min', 1)
+        price_max       = request.GET.get('price_max', 100000000)
+        instant_booking = request.GET.get('instant_booking', None)
+        bed             = request.GET.get('bed', 1)
+        bedroom         = request.GET.get('bedroom', 1)
+        bath            = request.GET.get('bath', 1)
+        amenity         = request.GET.getlist('amenity',None)
+            
+        page            = int(request.GET.get('page', 0))
+        limit           = int(request.GET.get('limit', 20))
+        offset          = (page*limit)
+        
+        
+        q = Q(check_in__gte=check_in,check_out__lte=check_out)
+        Reservation_period = RoomSchedule.objects.filter(q)
+        available_room_id_list = set([available_room_id.room_id for available_room_id in Reservation_period])
+            
+        q = Q()
+        if amenity:
+            q &= Q(amenity_id__in=amenity)
+        option_room_list = RoomAmenity.objects.filter(q)
+        option_applicable_room_list = [room.room_id for room in option_room_list]
+            
+        q = Q()
+        if category != "0":
+            q &= Q(category_id=category)            
+        q &= Q(guests__gte=guest)        
+        q &= Q(price__gte=price_min)        
+        q &= Q(price__lte=price_max)        
+        q &= Q(beds__gte=bed)        
+        q &= Q(bedrooms__gte=bedroom)        
+        q &= Q(baths__gte=bath)
+        q &= Q(id__in=available_room_id_list)
+        q &= Q(id__in=option_applicable_room_list)
+        q &= ~Q(is_instant_booking=instant_booking)
+        
+        rooms = Room.objects.filter(q)[offset:offset+limit]
+
+        results = [{
+            'room_name' : room.name,
+            'address'   : room.address,
+            'schedule'  : 
+                datetime.strftime([room_schedule.check_in for room_schedule in room.room_schedules.all()][0], '%m월 %d일')+" ~ "+
+                datetime.strftime([room_schedule.check_in for room_schedule in room.room_schedules.all()][-1], '%m월 %d일'),
+            'price'     : int(room.price),
+            'images'    : [image.image_url for image in room.room_images.all()],
+            'latitude'  : float(room.latitute),
+            'longitude' : float(room.longitute),
+        } for room in rooms]
+            
+        return JsonResponse({'results' : results}, status=200)
+
 
 class RoomDetailView(View):
     def get(self, request, room_id):
