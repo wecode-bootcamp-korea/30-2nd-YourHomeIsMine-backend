@@ -5,3 +5,4 @@ urlpatterns = [
     path('reviews', include('reviews.urls')),
     path("rooms", include('rooms.urls')),
 ]
+
