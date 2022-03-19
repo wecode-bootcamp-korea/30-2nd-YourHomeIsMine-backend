@@ -9,6 +9,7 @@ from django.db.models import Avg
 from users.models import User
 from rooms.models import Room
 from .models      import Review, ReviewImage
+from core.utils   import login_decorator
 from my_settings  import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_URL
 
 class ReviewView(View):   
@@ -99,3 +100,30 @@ class ReviewView(View):
         
         except KeyError: 
             return JsonResponse({'message':'KEY_ERROR'}, status=400)      
+    
+    @login_decorator
+    def delete(self, request, room_id, review_id):
+        try:
+            Review.objects.get(id=review_id, user=request.user).delete()
+
+            if ReviewImage.objects.filter(review_id=review_id):
+                s3_client = boto3.client(
+                    's3',
+                    aws_access_key_id     = AWS_ACCESS_KEY_ID,
+                    aws_secret_access_key = AWS_SECRET_ACCESS_KEY
+                )
+                for review_image in ReviewImage.objects.filter(review_id=review_id):
+                    s3_client.delete_object(Bucket = 's3-yhim', Key = review_image.image_url)
+
+                ReviewImage.objects.filter(review_id=review_id).objests.delete()
+
+            return JsonResponse({'message' : 'NO_CONTENTS'}, status=204)
+
+        except Review.DoesNotExist:
+            return JsonResponse({'message' : 'REVIEW_NOT_EXIST'}, status=400)
+
+        except KeyError:
+            return JsonResponse({'message' : 'KEY_ERROR'}, status=400)
+
+        except ValueError:
+            return JsonResponse({'message' : 'VALUE_ERROR'}, status=400)
