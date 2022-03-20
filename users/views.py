@@ -1,9 +1,11 @@
-import requests, jwt, datetime
+import json, jwt, requests, datetime
 
-from django.views import View
-from django.http  import JsonResponse
+from django.views     import View
+from django.http      import JsonResponse
 
-from users.models import User
+from rooms.models import Room
+from users.models import User, Wishlist, WishlistRoom
+from core.utils   import login_decorator
 from my_settings  import SECRET_KEY, ALGORITHM
 
 class KakaoSignIn(View):
@@ -47,7 +49,7 @@ class KakaoSignIn(View):
                 'user_id' : user.id, 
                 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
             }    
-            access_token = jwt.encode(payload, SECRET_KEY, ALGORITHM)
+            access_token = jwt.encode(payload, SECRET_KEY, ALGORITHM).decode('utf-8')
            
             results = {
                 'email'         : email,
@@ -68,3 +70,36 @@ class KakaoSignIn(View):
             
         except jwt.ExpiredSignatureError:
             return JsonResponse({'message' : 'EXPIRED_TOKEN'}, status = 400)  
+
+
+class WishlistView(View):
+    @login_decorator
+    def post(self, request):
+        try:
+            data      = json.loads(request.body)
+            room_id   = data['room_id']
+            list_id   = data['list_id']
+            list_name = data['list_name']
+            
+            rooms = Room.objects.get(id=room_id)
+            user = request.user
+
+            if not Wishlist.objects.filter(id=list_id, user=user).exists():
+                wishlist = Wishlist.objects.create(
+                    user = user,
+                    name = list_name
+                )
+            else:
+                wishlist = Wishlist.objects.get(id=list_id, user=user)
+                
+            WishlistRoom.objects.create(
+                room     = rooms,
+                wishlist = wishlist
+            )
+            return  JsonResponse({'message' : 'LIKED'}, status = 201)
+            
+        except KeyError:
+            return JsonResponse({'message' : 'KEY_ERROR'}, status = 400)        
+        except Room.DoesNotExist:
+            return JsonResponse({'message' : 'ROOM_DOES_NOT_EXIST'}, status = 400)
+
