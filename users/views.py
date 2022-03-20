@@ -1,9 +1,11 @@
-import requests, jwt, datetime
+import json, jwt, requests, datetime
 
-from django.views import View
-from django.http  import JsonResponse
+from django.views     import View
+from django.http      import JsonResponse
 
-from users.models import User
+from rooms.models import Room
+from users.models import User, Wishlist, WishlistRoom
+from core.utils   import login_decorator
 from my_settings  import SECRET_KEY, ALGORITHM
 
 class KakaoSignIn(View):
@@ -68,3 +70,33 @@ class KakaoSignIn(View):
             
         except jwt.ExpiredSignatureError:
             return JsonResponse({'message' : 'EXPIRED_TOKEN'}, status = 400)  
+
+
+class ToggleRoom(View):
+    @login_decorator
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            rooms = Room.objects.get(id=data["room_id"])
+            user_id = request.user.id
+
+            the_list, created = Wishlist.objects.get_or_create(
+                user_id=user_id,
+                name=data["name"]
+            )
+            if created == False:
+                the_list.delete()                
+                return JsonResponse({'message' : 'UNLIKED'}, status = 204)
+            
+            if created == True:
+                WishlistRoom.objects.create(
+                    room_id = rooms.id,
+                    wishlist_id = the_list.id
+                )
+                return  JsonResponse({'message' : 'LIKED'}, status = 201)
+            
+        except KeyError:
+            return JsonResponse({'message' : 'KEY_ERROR'}, status = 400)        
+        except Room.DoesNotExist:
+            return JsonResponse({'message' : 'ROOM_DOES_NOT_EXIST'}, status = 400)
+
