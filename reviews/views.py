@@ -1,3 +1,4 @@
+from msilib.schema import File
 import boto3, uuid
 from datetime import datetime
 
@@ -10,12 +11,12 @@ from users.models import User
 from rooms.models import Room
 from .models      import Review, ReviewImage
 from core.utils   import login_decorator
+from core.storage import FileUpload, MyS3Client, s3_client
 from my_settings  import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_URL
 
 class ReviewView(View):   
     def get(self, request, room_id):
         try:
-            
             limit   = int(request.GET.get('limit', 6))
             page    = int(request.GET.get('page', 1))
             offset  = (page-1) * limit           
@@ -60,9 +61,11 @@ class ReviewView(View):
         except ValueError:
             return JsonResponse({'message' : 'VALUE_ERROR'}, status=400)
     
-    # 로그인 데코레이터 같은 것 필요(user정보를 담고 있는)
+    @login_decorator
     def post(self, request, room_id):
         try:
+            file_handler = FileUpload(s3_client)
+            
             review = Review.objects.create(
                 content          = request.POST['content'],
                 accuracy         = request.POST['accuracy'],
@@ -71,30 +74,21 @@ class ReviewView(View):
                 location         = request.POST['location'],
                 check_in         = request.POST['check_in'],
                 cost_performance = request.POST['cost_performance'],
-                user             = User.objects.get(id=request.POST['user_id']),
+                user             = request.user,
                 room             = Room.objects.get(id=room_id)      
             )
 
-            review_images = request.FILES.getlist('review_images')
-            if review_images:
-                s3_client = boto3.client(
-                    's3',
-                    aws_access_key_id     = AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key = AWS_SECRET_ACCESS_KEY
-                )   
-                for i in range(len(review_images)):
-                    file      = review_images[i]
-                    file_name = str(uuid.uuid4()) + file.name
-                    s3_client.upload_fileobj(
-                        file,
-                        's3-yhim',
-                        file_name,
-                        ExtraArgs = {'ContentType' : file.content_type}
-                    )
-                    ReviewImage.objects.create(
-                        image_url = 'https://s3-yhim.s3.ap-northeast-2.amazonaws.com/' + file_name,
-                        review    = review
-                    )
+            review_images = request.FILES.getlist('review_images')  
+                
+            for image in review_images:
+                file      = image
+                file_name = str(uuid.uuid4()) + file.name
+                file_handler.upload(file, file_name)
+                
+                ReviewImage.objects.create(
+                    image_url = 'https://s3-yhim.s3.ap-northeast-2.amazonaws.com/' + file_name,
+                    review    = review
+                )
                     
             return JsonResponse({'message':'SUCCESS'}, status=201)
         
@@ -104,23 +98,18 @@ class ReviewView(View):
     @login_decorator
     def delete(self, request, room_id, review_id):
         try:
-            Review.objects.get(id=review_id, user=request.user).delete()
+            file_handler = FileUpload(s3_client)
+            Review.objects.get(id=review_id, user=request.user, room_id=room_id).delete()
 
-            if ReviewImage.objects.filter(review_id=review_id):
-                s3_client = boto3.client(
-                    's3',
-                    aws_access_key_id     = AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key = AWS_SECRET_ACCESS_KEY
-                )
-                for review_image in ReviewImage.objects.filter(review_id=review_id):
-                    s3_client.delete_object(Bucket = 's3-yhim', Key = review_image.image_url)
+            for review_image in ReviewImage.objects.filter(review_id=review_id):
+                file_handler.delete(review_image)
 
-                ReviewImage.objects.filter(review_id=review_id).objests.delete()
+            ReviewImage.objects.filter(review_id=review_id).delete()
 
             return JsonResponse({'message' : 'NO_CONTENTS'}, status=204)
 
         except Review.DoesNotExist:
-            return JsonResponse({'message' : 'REVIEW_NOT_EXIST'}, status=400)
+            return JsonResponse({'message' : 'REVIEW_NOT_EXIST'}, status=404)
 
         except KeyError:
             return JsonResponse({'message' : 'KEY_ERROR'}, status=400)
