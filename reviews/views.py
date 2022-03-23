@@ -1,16 +1,14 @@
-import boto3, uuid
 from datetime import datetime
 
 from django.http      import JsonResponse
 from django.views     import View
 from django.db.models import Avg
 
-
-from users.models import User
-from rooms.models import Room
-from .models      import Review, ReviewImage
-from core.utils   import login_decorator
-from my_settings  import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_URL
+from rooms.models  import Room
+from .models       import Review, ReviewImage
+from core.utils    import login_decorator
+from core.storages import s3_client, FileHandler
+from my_settings   import AWS_S3_URL
 
 class ReviewView(View):   
     def get(self, request, room_id):
@@ -60,7 +58,7 @@ class ReviewView(View):
         except ValueError:
             return JsonResponse({'message' : 'VALUE_ERROR'}, status=400)
     
-    # 로그인 데코레이터 같은 것 필요(user정보를 담고 있는)
+    @login_decorator
     def post(self, request, room_id):
         try:
             review = Review.objects.create(
@@ -71,30 +69,22 @@ class ReviewView(View):
                 location         = request.POST['location'],
                 check_in         = request.POST['check_in'],
                 cost_performance = request.POST['cost_performance'],
-                user             = User.objects.get(id=request.POST['user_id']),
+                user             = request.user,
                 room             = Room.objects.get(id=room_id)      
             )
 
             review_images = request.FILES.getlist('review_images')
-            if review_images:
-                s3_client = boto3.client(
-                    's3',
-                    aws_access_key_id     = AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key = AWS_SECRET_ACCESS_KEY
-                )   
-                for i in range(len(review_images)):
-                    file      = review_images[i]
-                    file_name = str(uuid.uuid4()) + file.name
-                    s3_client.upload_fileobj(
-                        file,
-                        's3-yhim',
-                        file_name,
-                        ExtraArgs = {'ContentType' : file.content_type}
-                    )
-                    ReviewImage.objects.create(
-                        image_url = 'https://s3-yhim.s3.ap-northeast-2.amazonaws.com/' + file_name,
-                        review    = review
-                    )
+            
+            file_handler = FileHandler(s3_client)  
+            
+            for review_image in review_images:
+                
+                file_name = file_handler.upload(review_image)
+                
+                ReviewImage.objects.create(
+                    image_url = file_name,
+                    review    = review
+                )
                     
             return JsonResponse({'message':'SUCCESS'}, status=201)
         
@@ -104,19 +94,15 @@ class ReviewView(View):
     @login_decorator
     def delete(self, request, room_id, review_id):
         try:
-            Review.objects.get(id=review_id, user=request.user).delete()
-
-            if ReviewImage.objects.filter(review_id=review_id):
-                s3_client = boto3.client(
-                    's3',
-                    aws_access_key_id     = AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key = AWS_SECRET_ACCESS_KEY
-                )
-                for review_image in ReviewImage.objects.filter(review_id=review_id):
-                    s3_client.delete_object(Bucket = 's3-yhim', Key = review_image.image_url)
-
-                ReviewImage.objects.filter(review_id=review_id).objests.delete()
-
+            review = Review.objects.get(id=review_id, user=request.user, room_id=room_id)
+        
+            file_handler = FileHandler(s3_client)  
+            
+            for review_image in review.review_images.all():
+                file_handler.delete(review_image.image_url)
+                
+            review.review_images.all().delete()
+            review.delete()
             return JsonResponse({'message' : 'NO_CONTENTS'}, status=204)
 
         except Review.DoesNotExist:
