@@ -72,28 +72,32 @@ class KakaoSignIn(View):
             return JsonResponse({'message' : 'EXPIRED_TOKEN'}, status = 400)  
 
 
-class ToggleRoom(View):
+class WishlistView(View):
     @login_decorator
     def post(self, request):
         try:
-            data = json.loads(request.body)
-            rooms = Room.objects.get(id=data["room_id"])
-            user_id = request.user.id
-
-            the_list, created = Wishlist.objects.get_or_create(
-                user_id=user_id,
-                name=data["name"]
-            )
-            if created == False:
-                the_list.delete()                
-                return JsonResponse({'message' : 'UNLIKED'}, status = 204)
+            data      = json.loads(request.body)
+            room_id   = data['room_id']
+            list_id   = data['list_id']
+            list_name = data['list_name']
             
-            if created == True:
-                WishlistRoom.objects.create(
-                    room_id = rooms.id,
-                    wishlist_id = the_list.id
-                )
-                return  JsonResponse({'message' : 'LIKED'}, status = 201)
+            rooms = Room.objects.get(id=room_id)
+            user  = request.user
+
+            wishlist, is_created = Wishlist.objects.get_or_create(
+                id       = list_id,
+                user     = user,
+                defaults = {
+                    "name" : list_name
+                }
+            )
+            
+            WishlistRoom.objects.create(
+                room     = rooms,
+                wishlist = wishlist
+            )
+            
+            return  JsonResponse({'message' : 'LIKED'}, status = 201)
             
         except KeyError:
             return JsonResponse({'message' : 'KEY_ERROR'}, status = 400)        
