@@ -3,11 +3,11 @@ from django.http       import JsonResponse
 from django.views      import View
 from django.db.models  import Q
 
-from rooms.models      import Room, RoomAmenity, RoomHouseRule, RoomSchedule
+from rooms.models      import Amenity, Room, RoomAmenity, RoomHouseRule, RoomSchedule
         
 class RoomListView(View):
     def get(self, request):
-        category        = request.GET.get('category', "0")
+        category        = request.GET.get('category', None)
         check_in        = request.GET.get('check_in', "2022-01-01")
         check_out       = request.GET.get('check_out', "2022-12-31")
         guest           = request.GET.get('guest', 1)
@@ -23,28 +23,26 @@ class RoomListView(View):
         limit           = int(request.GET.get('limit', 20))
         offset          = (page*limit)
         
-        
-        q = Q(check_in__gte=check_in,check_out__lte=check_out)
-        Reservation_period = RoomSchedule.objects.filter(q)
-        available_room_id_list = set([available_room_id.room_id for available_room_id in Reservation_period])
+        Reservation_period = RoomSchedule.objects.filter(
+            check_in__gte  = check_in, 
+            check_out__lte = check_out
+        )
+        available_room_id_list = set([available_room.room_id for available_room in Reservation_period])
             
         q = Q()
+
         if amenity:
-            q &= Q(amenity_id__in=amenity)
-        option_room_list = RoomAmenity.objects.filter(q)
-        option_applicable_room_list = [room.room_id for room in option_room_list]
-            
-        q = Q()
-        if category != "0":
-            q &= Q(category_id=category)            
+            q &= Q(room_amenities__amenity_id__in=amenity)
+        
+        if category:
+            q &= Q(category_id=category)
+
         q &= Q(guests__gte=guest)        
-        q &= Q(price__gte=price_min)        
-        q &= Q(price__lte=price_max)        
+        q &= Q(price__rang=[price_min, price_max])            
         q &= Q(beds__gte=bed)        
         q &= Q(bedrooms__gte=bedroom)        
         q &= Q(baths__gte=bath)
-        q &= Q(id__in=available_room_id_list)
-        q &= Q(id__in=option_applicable_room_list)
+        q &= Q(id__in=available_room_id_list)    
         q &= ~Q(is_instant_booking=instant_booking)
         
         rooms = Room.objects.filter(q)[offset:offset+limit]
