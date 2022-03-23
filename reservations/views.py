@@ -16,17 +16,19 @@ class ReservationView(View):
             data      = json.loads(request.body)
             check_in  = datetime(data['check_in'])
             check_out = datetime(data['check_out'])
-            guests    = data['guest']
+            guests    = data['guests']
             
             if check_in < datetime.now() :
-                return JsonResponse({'message' : 'NO_WAY_TO_BOOK_BEFORE_TODAY'}, status=403)
+                return JsonResponse({'message' : 'NO_WAY_TO_BOOK_BEFORE_TODAY'}, status=400)
             
             if check_out < check_in :
-                return JsonResponse({'message' : 'INVALID_BOOKING_DATE'}, status=403)
+                return JsonResponse({'message' : 'INVALID_BOOKING_DATE'}, status=400)
             
-            q = Q(room_id=room_id, user=request.user)                                                                                                                                              
+            q = Q() 
+            q |= Q(check_in__range=[check_in,check_out])
+            q |= Q(check_out__range=[check_in,check_out])
 
-            if Reservation.objects.filter(q & Q(check_in__range=[check_in,check_out]) | q & Q(check_out__range=[check_in,check_out])):
+            if Reservation.objects.filter(q, room_id=room_id, user=request.user).exists():
                 return JsonResponse({'message' : 'DOUBLE_BOOKED_FOR_THE_DAY'}, status=403)
 
             room = Room.objects.get(room_id)
@@ -41,6 +43,7 @@ class ReservationView(View):
                 user             = request.user,
                 room             = room
             )
+            
             for i in range((datetime(check_out)-datetime(check_in)).days):
                 ReservationItem.objects.create(
                     guests        = guests,
