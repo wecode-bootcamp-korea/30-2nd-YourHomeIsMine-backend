@@ -21,7 +21,7 @@ class ReservationStatus(models.Model):
         
 class ReservationItem(models.Model):
     guests        = models.PositiveIntegerField()
-    room_schedule = models.ForeignKey('rooms.Room', related_name='reservation_items', on_delete=models.CASCADE)
+    room_schedule = models.ForeignKey('rooms.RoomSchedule', related_name='reservation_items', on_delete=models.CASCADE)
     reservation   = models.ForeignKey('Reservation', related_name='reservation_items', on_delete=models.CASCADE)
     
     class Meta:
