@@ -26,10 +26,10 @@ class ReservationView(View):
                 return JsonResponse({'message' : 'INVALID_BOOKING_DATE'}, status=400)
             
             q = Q() 
-            q |= Q(check_in__range=[check_in,check_out])
-            q |= Q(check_out__range=[check_in,check_out])
+            q |= Q(check_in__range  = [check_in,check_out-timedelta(days=1)])
+            q |= Q(check_out__range = [check_in+timedelta(days=1),check_out])
             
-            if Reservation.objects.filter(q, room_id=room_id, user_id=request.user).exists():
+            if Reservation.objects.filter(q, room_id=room_id, user=request.user).exists():
                 return JsonResponse({'message' : 'DOUBLE_BOOKED_FOR_THE_DAY'}, status=400)
 
             room = Room.objects.get(id=room_id)
@@ -44,12 +44,11 @@ class ReservationView(View):
                             reservation_status_id = 1,
                             check_in              = check_in,
                             check_out             = check_out,
-                            user_id               = data['user_id'],
                             user                  = request.user,
                             room                  = room
                         )
                 
-                for i in range(int((check_out-check_in).days-1)):
+                for i in range(int((check_out-check_in).days)):
                     date = datetime.date(check_in + timedelta(days=i))
                     
                     if date not in room.room_schedules.values_list('check_in', flat=True):
