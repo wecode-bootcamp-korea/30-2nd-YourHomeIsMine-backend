@@ -20,7 +20,7 @@ class RoomListView(View):
         amenity         = request.GET.getlist('amenity', None)
             
         page            = int(request.GET.get('page', 0))
-        limit           = int(request.GET.get('limit', 20))
+        limit           = int(request.GET.get('limit', 60))
         offset          = (page*limit)
         
         Reservation_period = RoomSchedule.objects.filter(
@@ -48,6 +48,7 @@ class RoomListView(View):
         rooms = Room.objects.filter(q)[offset:offset+limit]
 
         results = [{
+            'room_id'       : room.id,
             'room_name'     : room.name,
             'address'       : room.address,
             'schedule'      : 
