@@ -6,7 +6,7 @@ YourHomeIsMine은 Airbnb를 모티브 해 공간을 임대하는 숙박 공유 �
 
 
 ### 🚀 개발 인원 및 기간
-* 개발 기간 : 2022/2/28 ~ 2022/3/11 (2주간)
+* 개발 기간 : 2022/3/14 ~ 2022/3/25 (2주간)
 * 프론트엔드 3명, 백엔드 3명
     * Back-end   
         * 김기현 - Modeling, Social Login API, Room Detail API, Wishlist API
