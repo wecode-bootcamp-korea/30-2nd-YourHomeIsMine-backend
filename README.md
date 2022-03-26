@@ -1,7 +1,7 @@
 # YourHomeIsMine(네집내집) 프로젝트
 <img width="234" src="https://user-images.githubusercontent.com/60570733/160076605-e13d5aae-3acd-4c33-b269-19e9ee694097.png">
-YourHomeIsMine은 Airbnb를 모티브 해 공간을 임대하는 숙박 공유 서비스로 예약하기까지의 로직에 집중하여 클론코딩을 진행하였습니다. </br>
-소셜 로그인, 원하는 숙소 조건 검색, 숙소 리스트 조회, 숙소 상세 페이지, 인원 선택, 예약까지 하나의 플로우를 구현했습니다.
+YourHomeIsMine은 Airbnb를 모티브 해 공간을 임대하는 숙박 공유 서비스 '우리동네 최고의 숙박공유 서비스'를 목표로 프로젝트를 진행하였습니다.</br>
+소셜 로그인, 원하는 숙소 조건 검색, 숙소 리스트 조회, 숙소 상세 페이지, 인원 선택, 예약까지 하나의 서비스 플로우를 구현했습니다.
 <br><br>
 
 
@@ -21,8 +21,8 @@ YourHomeIsMine은 Airbnb를 모티브 해 공간을 임대하는 숙박 공유 �
 
 
 # 📍 데모 영상
-![메인이랑소셜로그인](https://user-images.githubusercontent.com/60570733/160085419-a86dc448-cfd2-4f1d-a2a3-2742bbdb61d2.gif)
-![리스트페이지짤](https://user-images.githubusercontent.com/60570733/160085437-c4119dd7-75cc-440d-b48e-38ebec908796.gif)
+![메인페이지와소셜로그인](https://user-images.githubusercontent.com/60570733/160085419-a86dc448-cfd2-4f1d-a2a3-2742bbdb61d2.gif)
+![리스트페이지](https://user-images.githubusercontent.com/60570733/160085437-c4119dd7-75cc-440d-b48e-38ebec908796.gif)
 ![디테일페이지](https://user-images.githubusercontent.com/60570733/160085446-1c23d680-caaa-4a81-b815-ac052b4518e7.gif)
 
 
@@ -60,7 +60,7 @@ YourHomeIsMine은 Airbnb를 모티브 해 공간을 임대하는 숙박 공유 �
 
 
 ## 초기기획 및 구현 목표
-* 짧은 기간동안 flow에 해당하는 기능 구현을 목표
+* 짧은 기간동안 service flow에 해당하는 기능 구현을 목표
 * 개발은 초기세팅부터 전부 직접 구현
 * 사이트 카테고리 중 숙소 예약 기능만 구현
 * 필수 구현 사항을 (소셜) 로그인, 숙소 조회, 숙소 상세페이지, 예약으로 설정 
@@ -147,8 +147,8 @@ YourHomeIsMine은 Airbnb를 모티브 해 공간을 임대하는 숙박 공유 �
 # Reference
 * 이 프로젝트는 [Airbnb](https://airbnb.co.kr) 사이트를 참조하여 학습목적으로 만들었습니다.
 * 실수수준의 프로젝트이지만 학습용으로 만들었기 떄문에 이 코드를 활용하여 이득을 취하거나 무단 배포할 경우 법적으로 문제될 수 있습니다.
-* 이 프로젝트에서 사용하고 있는 사진 대부분은 위코드에서 구매한 것이므로 해당 프로젝트 외부인이 사용할 수 없습니다
-* 이 프로젝트에서 사용하고 있는 로고와 배너는 해당 프로젝트 팀원 소유이므로 해당 프로젝트 외부인이 사용할 수 없습니다
+* 이 프로젝트에서 사용하고 있는 사진 대부분은 위코드에서 구매한 것이므로 해당 프로젝트 외부인이 사용할 수 없습니다.
+* 이 프로젝트에서 사용하고 있는 로고와 배너는 해당 프로젝트 팀원 소유이므로 해당 프로젝트 외부인이 사용할 수 없습니다.
 
 ![Footer](https://capsule-render.vercel.app/api?type=waving&color=ffcc51&height=100&section=footer)
 
