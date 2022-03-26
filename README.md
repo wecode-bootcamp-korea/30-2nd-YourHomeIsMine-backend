@@ -56,7 +56,8 @@ YourHomeIsMine은 Airbnb를 모티브 해 공간을 임대하는 숙박 공유 �
 <br><br>
 
 ## User flow
-<img src="https://user-images.githubusercontent.com/90089275/158054162-33f65fd5-e4ca-4948-ae62-22c90769e04f.png">
+
+<img width="924" alt="스크린샷 2022-03-27 오전 12 41 14" src="https://user-images.githubusercontent.com/60570733/160246837-e87b4a41-f758-4d53-a715-345eb299babd.png">
 
 
 ## 초기기획 및 구현 목표
@@ -65,6 +66,8 @@ YourHomeIsMine은 Airbnb를 모티브 해 공간을 임대하는 숙박 공유 �
 * 사이트 카테고리 중 숙소 예약 기능만 구현
 * 필수 구현 사항을 (소셜) 로그인, 숙소 조회, 숙소 상세페이지, 예약으로 설정 
 * 한 상품에 여러 옵션(숙소 종류, 인원, 기간)이 적용될 수 있게 기획
+* 예약 된 일정을 제외한 예약 가능일만 예약할 수 있는 로직 구현
+* 리뷰 CRUD
 
 <br><br>
 
@@ -100,47 +103,53 @@ YourHomeIsMine은 Airbnb를 모티브 해 공간을 임대하는 숙박 공유 �
 * ## 구현기능
     * 회원가입 / 로그인
         - 카카오톡 소셜 로그인
-        - 수정
-        - request.header에 담긴 token을 통해 로그인 여부를 검사
+        - OAuth2에 맞는 로직 구현
+        - 일치하는 user가 없으면 Create, user가 있으면 Get하는 로직 적용
+        - Unit Test 완료
     * Room List API
         - Q를 활용해 판매 상품의 분류에 따른 filtering 적용
-        - 가격, 생산 순에 따른 sorting 적용
+        - 가격, 기간, 인원, 카테고리, amenity에 따른 filtering 적용
         - pagination
+        - Unit Test 완료
     * Room Detail API
-        - 상품 상세페이지에 필요한 데이터를 products와 product_size, size 테이블에서 필터링 하여 엔드 포인트로 전달
-        - 필요한 옵션을 선택하여 장바구니로 저장할 수 있도록 구현
+        - 숙소 상세페이지에 필요한 데이터를 필터링 하여 프론트엔드로 전달
+        - path parameter 경로 적용
+        - ORM 최적화
+        - Unit Test 완료
     * Wishlist API
-        - 장바구니 상품 추가, 조회, 수량 수정, 선택 삭제 기능 구현
+        - 해당 room_id를 가져온 후 Wishlist를 생성
+        - 성공할 시 WishlistRoom 테이블의 항목 생성
+        - adding and deleting 기능 구현
+        - wishlist추가 시 중간테이블도 생성되는 로직 구현
+        - Unit Test 완료
     * Reservation API
-        - 장바구니에서 넘겨받은 정보를 넘겨받아 구매
+        - 예약 CRUD 기능 구현
         - 일련의 과정에 원자성을 부여하기 위해 transaction 사용
-        - 주문 후 주문내역을 받을 수 있는 로직 구현
-        - 구매 한 상품은 장바구니에서 삭제   
+        - 기존 예약이 존재할 때, 예약가능일자 검증 조건 확인
      * Review API
-        - 장바구니에서 넘겨받은 정보를 넘겨받아 구매
-        - 일련의 과정에 원자성을 부여하기 위해 transaction 사용
-        - 주문 후 주문내역을 받을 수 있는 로직 구현
-        - 구매 한 상품은 장바구니에서 삭제
+        - 리뷰 CRUD 구현
+        - AWS S3 활용하여 이미지 저장
+        - 
 <br><br>
 
 
 ## API 문서화
 <img width="1144" alt="스크린샷 2022-03-25 오후 5 32 57" src="https://user-images.githubusercontent.com/60570733/160084208-f227cb40-12cb-44cc-84ff-8ec766a7a8bb.png">
 
-* 포스트맨을 이용해 API 문서화를 진행했습니다.
-* 이번 프로젝트에서 쿼리파라미터(category, check_in&out, amenity, price, guest, options, page, booking 등)로 많은 값들을 받아야했기 때문에 API 문서화가 굉장히 중요했습니다.
-* 프론트엔드와 소통 시 문서를 통해 1차적으로 커뮤니케이션 비용을 줄일 수 있었습니다.
+* 포스트맨을 이용해 API 문서화를 진행
+* 이번 프로젝트에서 쿼리파라미터(category, check_in&out, amenity, price, guest, options, page, booking 등)로 많은 값들을 받아야했기 때문에 API 문서화를 진행
+* 프론트엔드와 소통 시 문서를 통해 1차적으로 커뮤니케이션 비용을 줄임
 <br><br>
 
 ## Trello
 
 <img width="1676" alt="스크린샷 2022-03-25 오후 5 31 52" src="https://user-images.githubusercontent.com/60570733/160083999-169baf7d-2f32-4543-8b84-d0d09e74b1c2.png">
 
-* 트렐로를 이용해 모든 업무들을 세분화 시켜 하나의 티켓으로 만들었습니다.
-* 팀원들과 공유해야할 내용은 공지 탭을 통해 단일화하였습니다.
-* 전체 프로세스를 네 가지 카테고리로 나눠서 각각의 티켓을 과정에 따라 하나씩 이동 시키며 프로젝트의 모든 일정과 업무를 관리했습니다.
-* 각자 데일리 스탠드업 미팅 로그를 작성하고 10~20분내로 짧게 진행상황 및 블로커를 점검했습니다.
-* 스프린트 주기를 지켜 한 스프린트가 끝나고 회고미팅을 해 발전방향을 모색하였습니다.
+* 트렐로를 이용해 모든 업무들을 세분화 시켜 하나의 티켓으로 제작
+* 팀원들과 공유해야할 내용은 공지 탭을 통해 단일화
+* 전체 프로세스를 네 가지 카테고리로 나눠서 각각의 티켓을 과정에 따라 하나씩 이동 시키며 프로젝트의 모든 일정과 업무를 관리
+* 각자 데일리 스탠드업 미팅 로그를 작성하고 10~20분내로 짧게 진행상황 및 블로커를 점검
+* 스프린트 주기를 지켜 한 스프린트가 끝나고 회고미팅을 해 발전방향을 모색
 
 <br>
 
