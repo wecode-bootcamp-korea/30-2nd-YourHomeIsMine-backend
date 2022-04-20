@@ -16,7 +16,7 @@ YourHomeIsMine은 Airbnb를 모티브 해 공간을 임대하는 숙박 공유 �
         * 이상민 - Room List, Footer
         * 정수인 - Room Detail, Social Login
         * 신윤숙 - Room Main, Social Login, Nav, Footer 
-     * <a href="https://github.com/wecode-bootcamp-korea/30-1st-CaKoo-frontend">프론트 github 링크</a>
+     * <a href="https://github.com/agnesshin/30-2nd-YourHomeIsMine-frontend">프론트 github 링크</a>
 <br><br>
 
 
